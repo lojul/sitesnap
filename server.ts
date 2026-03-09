@@ -75,6 +75,7 @@ async function captureScreenshots(jobId: string, urls: string[]) {
   let browser;
   try {
     browser = await puppeteer.launch({
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
