@@ -1,0 +1,5 @@
+{
+  "name": "SiteSnap - Website Screenshot Crawler",
+  "description": "Crawl up to 10 pages of any website and download full-page screenshots as a ZIP file.",
+  "requestFramePermissions": []
+}
