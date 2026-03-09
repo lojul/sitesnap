@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sitesnap
+    name: sitesnap-lojul
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
