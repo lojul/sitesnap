@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Camera, Download, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, Monitor, Smartphone, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Markdown from "react-markdown";
-import { GoogleGenAI } from "@google/genai";
 
 type JobStatus = "pending" | "crawling" | "capturing" | "zipping" | "completed" | "failed";
 
@@ -69,16 +68,28 @@ export default function App() {
   };
 
   const generateSummary = async (text: string) => {
-    if (!process.env.GEMINI_API_KEY) return;
-    
+    if (!process.env.DEEPSEEK_API_KEY) return;
+
     setIsGeneratingSummary(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Summarize this website content in 3-4 bullet points. Focus on the main purpose and key features. Content: ${text}`,
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "user",
+              content: `Summarize this website content in 3-4 bullet points. Focus on the main purpose and key features. Content: ${text}`,
+            },
+          ],
+        }),
       });
-      setSummary(response.text || "No summary available.");
+      const data = await response.json();
+      setSummary(data.choices?.[0]?.message?.content || "No summary available.");
     } catch (error) {
       console.error("AI Summary error:", error);
       setSummary("Could not generate summary.");
