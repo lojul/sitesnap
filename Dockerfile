@@ -31,12 +31,15 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 COPY . .
 
 # Build frontend
 RUN npm run build
+
+# Remove devDependencies after build
+RUN npm prune --production
 
 ENV NODE_ENV=production
 ENV PORT=3000
