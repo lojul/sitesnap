@@ -83,7 +83,7 @@ export default function App() {
           messages: [
             {
               role: "user",
-              content: `Summarize this website content in 3-4 bullet points. Focus on the main purpose and key features. Content: ${text}`,
+              content: `Summarize this website content in 3-4 bullet points in English. Focus on the main purpose and key features. Always respond in English regardless of the website's language. Content: ${text}`,
             },
           ],
         }),
