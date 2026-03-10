@@ -341,6 +341,41 @@ async function startServer() {
     });
   });
 
+  // AI Summary endpoint
+  app.post("/api/summarize", async (req, res) => {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: "Text is required" });
+    if (!process.env.DEEPSEEK_API_KEY) {
+      return res.status(500).json({ error: "DEEPSEEK_API_KEY not configured" });
+    }
+
+    try {
+      const response = await axios.post(
+        "https://api.deepseek.com/chat/completions",
+        {
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "user",
+              content: `Summarize this website content in 3-4 bullet points in English. Focus on the main purpose and key features. Always respond in English regardless of the website's language. Content: ${text}`,
+            },
+          ],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+          },
+        }
+      );
+      const summary = response.data.choices?.[0]?.message?.content || "No summary available.";
+      res.json({ summary });
+    } catch (error: any) {
+      console.error("AI Summary error:", error.response?.data || error.message);
+      res.status(500).json({ error: "Failed to generate summary" });
+    }
+  });
+
   // JSON 404 for API routes
   app.all("/api/*", (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });

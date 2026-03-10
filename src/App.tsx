@@ -68,28 +68,19 @@ export default function App() {
   };
 
   const generateSummary = async (text: string) => {
-    if (!process.env.DEEPSEEK_API_KEY) return;
-
     setIsGeneratingSummary(true);
     try {
-      const response = await fetch("https://api.deepseek.com/chat/completions", {
+      const response = await fetch("/api/summarize", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [
-            {
-              role: "user",
-              content: `Summarize this website content in 3-4 bullet points in English. Focus on the main purpose and key features. Always respond in English regardless of the website's language. Content: ${text}`,
-            },
-          ],
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
       });
       const data = await response.json();
-      setSummary(data.choices?.[0]?.message?.content || "No summary available.");
+      if (data.error) {
+        setSummary("Could not generate summary.");
+      } else {
+        setSummary(data.summary || "No summary available.");
+      }
     } catch (error) {
       console.error("AI Summary error:", error);
       setSummary("Could not generate summary.");
