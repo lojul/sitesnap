@@ -149,11 +149,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-[#211D18] font-sans selection:bg-[#C2410C] selection:text-[#FAF7F2]">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#211D18] font-sans selection:bg-[#EA580C] selection:text-[#FAF7F2]">
       {/* Header */}
       <header className="border-b border-[#211D18]/10 p-6 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-full bg-[#C2410C] ring-2 ring-[#C2410C]/25 ring-offset-2 ring-offset-[#FAF7F2] flex items-center justify-center text-[#FAF7F2]">
+          <div className="relative w-10 h-10 rounded-full bg-[#EA580C] ring-2 ring-[#EA580C]/25 ring-offset-2 ring-offset-[#FAF7F2] flex items-center justify-center text-[#FAF7F2]">
             <Aperture size={20} strokeWidth={2} />
           </div>
           <h1 className="text-xl font-bold tracking-tight uppercase italic font-serif">SiteSnap</h1>
@@ -198,7 +198,7 @@ export default function App() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
-                    className="w-full bg-[#FAF7F2] border-none rounded-2xl py-5 pl-12 pr-4 text-lg focus:ring-2 focus:ring-[#C2410C] transition-all disabled:opacity-50"
+                    className="w-full bg-[#FAF7F2] border-none rounded-2xl py-5 pl-12 pr-4 text-lg focus:ring-2 focus:ring-[#EA580C] transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -212,26 +212,26 @@ export default function App() {
                     type="button"
                     onClick={() => setDevice("desktop")}
                     disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${
-                      device === "desktop" 
-                        ? "bg-[#C2410C] text-[#FAF7F2] border-[#C2410C]" 
+                    className={`flex items-center justify-center gap-2 py-2 text-sm rounded-xl border transition-all ${
+                      device === "desktop"
+                        ? "bg-[#EA580C] text-[#FAF7F2] border-[#EA580C]"
                         : "bg-transparent text-[#211D18] border-black/10 hover:border-black/30"
                     }`}
                   >
-                    <Monitor size={18} />
+                    <Monitor size={16} />
                     <span className="font-medium">Desktop</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDevice("mobile")}
                     disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${
-                      device === "mobile" 
-                        ? "bg-[#C2410C] text-[#FAF7F2] border-[#C2410C]" 
+                    className={`flex items-center justify-center gap-2 py-2 text-sm rounded-xl border transition-all ${
+                      device === "mobile"
+                        ? "bg-[#EA580C] text-[#FAF7F2] border-[#EA580C]"
                         : "bg-transparent text-[#211D18] border-black/10 hover:border-black/30"
                     }`}
                   >
-                    <Smartphone size={18} />
+                    <Smartphone size={16} />
                     <span className="font-medium">Mobile</span>
                   </button>
                 </div>
@@ -240,13 +240,13 @@ export default function App() {
               <button
                 type="submit"
                 disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
-                className="w-full bg-[#C2410C] text-[#FAF7F2] rounded-2xl py-5 font-bold text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                className="w-full bg-[#EA580C] text-[#FAF7F2] rounded-2xl py-3.5 font-bold text-base flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
               >
                 {isSubmitting ? (
-                  <Loader2 className="animate-spin" size={24} />
+                  <Loader2 className="animate-spin" size={20} />
                 ) : (
                   <>
-                    <Camera size={24} />
+                    <Camera size={20} />
                     <span>Start Capture</span>
                   </>
                 )}
@@ -293,7 +293,7 @@ export default function App() {
                                  job.total > 0 ? `${(job.progress / job.total) * 100}%` : "10%" 
                         }}
                         className={`h-full transition-all duration-500 ${
-                          job.status === "failed" ? "bg-red-500" : "bg-[#C2410C]"
+                          job.status === "failed" ? "bg-red-500" : "bg-[#EA580C]"
                         }`}
                       />
                     </div>
@@ -355,7 +355,7 @@ export default function App() {
                           <button
                             onClick={downloadSelected}
                             disabled={isDownloadingSelected}
-                            className="bg-[#C2410C] text-[#FAF7F2] px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#9A3412] transition-all disabled:opacity-50"
+                            className="bg-[#EA580C] text-[#FAF7F2] px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#C2410C] transition-all disabled:opacity-50"
                           >
                             {isDownloadingSelected ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                             Download Selected ({selectedScreenshots.size})
@@ -375,7 +375,7 @@ export default function App() {
                             onClick={() => toggleScreenshotSelection(name)}
                             className={`relative group aspect-[4/3] rounded-2xl overflow-hidden border-2 cursor-pointer transition-all duration-300 ${
                               selectedScreenshots.has(name) 
-                                ? "border-[#C2410C] ring-4 ring-[#C2410C]/10" 
+                                ? "border-[#EA580C] ring-4 ring-[#EA580C]/10" 
                                 : "border-transparent shadow-sm hover:shadow-xl hover:shadow-black/10"
                             }`}
                           >
