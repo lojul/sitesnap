@@ -37,7 +37,7 @@ SiteSnap is a powerful web utility that allows you to capture full-page screensh
 
 ### Deployment
 - **Docker** - Containerization (with Chromium + CJK fonts)
-- **Render** - Hosting platform (free tier)
+- **Railway** - Hosting platform
 
 ### Architecture
 ```
@@ -79,13 +79,12 @@ User → React SPA → Express API → Puppeteer (screenshots)
 
 5. Open your browser and navigate to `http://localhost:3000`.
 
-### Deploy to Render
+### Deploy to Railway
 
-Click the button below to deploy your own instance:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lojul/sitesnap)
-
-Remember to set the `DEEPSEEK_API_KEY` environment variable in Render after deployment.
+1. Go to [railway.app](https://railway.app) and create a **New Project** → **Deploy from GitHub repo**, then select `lojul/sitesnap`.
+2. Railway auto-detects the `Dockerfile` and builds/deploys it — no extra config needed.
+3. In the service's **Variables** tab, set `DEEPSEEK_API_KEY`.
+4. Generate a public domain for the service under **Settings** → **Networking**.
 
 ## License
 
