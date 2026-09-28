@@ -8,7 +8,7 @@ SiteSnap is a powerful web utility that allows you to capture full-page screensh
 - **Full Page Capture**: Captures the entire length of the page, not just the visible viewport.
 - **Live Preview Gallery**: View screenshots as they are captured in real-time.
 - **Selective Download**: Choose specific screenshots to download or grab the entire set.
-- **AI-Powered Summary**: Automatically generates a concise summary of the website content using DeepSeek.
+- **AI-Powered Summary**: Automatically generates a concise summary of the website content via OpenRouter.
 - **Device Emulation**: Toggle between Desktop and Mobile viewports.
 
 ## Tech Stack
@@ -29,7 +29,7 @@ SiteSnap is a powerful web utility that allows you to capture full-page screensh
 - **tsx** - TypeScript execution
 
 ### AI
-- **DeepSeek API** - Website content summarization (OpenAI-compatible)
+- **OpenRouter API** - Website content summarization (defaults to DeepSeek's model, OpenAI-compatible)
 
 ### Build Tools
 - **Vite** - Frontend bundler
@@ -42,7 +42,7 @@ SiteSnap is a powerful web utility that allows you to capture full-page screensh
 ### Architecture
 ```
 User → React SPA → Express API → Puppeteer (screenshots)
-                              → DeepSeek (AI summary)
+                              → OpenRouter (AI summary)
                               → JSZip (download)
 ```
 
@@ -51,7 +51,7 @@ User → React SPA → Express API → Puppeteer (screenshots)
 ### Prerequisites
 
 - Node.js (v20 or higher)
-- A DeepSeek API Key (get one at https://platform.deepseek.com)
+- An OpenRouter API Key (get one at https://openrouter.ai/keys)
 
 ### Installation
 
@@ -67,9 +67,9 @@ User → React SPA → Express API → Puppeteer (screenshots)
    ```
 
 3. Set up environment variables:
-   Create a `.env` file in the root directory and add your DeepSeek API key:
+   Create a `.env` file in the root directory and add your OpenRouter API key:
    ```env
-   DEEPSEEK_API_KEY=your_api_key_here
+   OPENROUTER_API_KEY=your_api_key_here
    ```
 
 4. Start the development server:
@@ -83,7 +83,7 @@ User → React SPA → Express API → Puppeteer (screenshots)
 
 1. Go to [railway.app](https://railway.app) and create a **New Project** → **Deploy from GitHub repo**, then select `lojul/sitesnap`.
 2. Railway auto-detects the `Dockerfile` and builds/deploys it — no extra config needed.
-3. In the service's **Variables** tab, set `DEEPSEEK_API_KEY`.
+3. In the service's **Variables** tab, set `OPENROUTER_API_KEY`.
 4. Generate a public domain for the service under **Settings** → **Networking**.
 
 ## License

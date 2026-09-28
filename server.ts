@@ -345,15 +345,15 @@ async function startServer() {
   app.post("/api/summarize", async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: "Text is required" });
-    if (!process.env.DEEPSEEK_API_KEY) {
-      return res.status(500).json({ error: "DEEPSEEK_API_KEY not configured" });
+    if (!process.env.OPENROUTER_API_KEY) {
+      return res.status(500).json({ error: "OPENROUTER_API_KEY not configured" });
     }
 
     try {
       const response = await axios.post(
-        "https://api.deepseek.com/chat/completions",
+        "https://openrouter.ai/api/v1/chat/completions",
         {
-          model: "deepseek-chat",
+          model: process.env.OPENROUTER_MODEL || "deepseek/deepseek-chat",
           messages: [
             {
               role: "user",
@@ -364,7 +364,7 @@ async function startServer() {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+            Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           },
         }
       );
