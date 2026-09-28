@@ -10,11 +10,37 @@ import fs from "fs";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Railway sits in front of the container as a reverse proxy; without this,
+// req.ip resolves to the proxy's address and per-IP rate limiting below
+// would treat every visitor as the same client.
+app.set("trust proxy", 1);
 
 // Hard cap on screenshot "parts" per page, so a page whose scroll height
 // keeps growing (infinite carousels, ever-expanding "load more" sections)
 // can't balloon into dozens of near-duplicate screenshots.
 const MAX_SCREENSHOT_PARTS = 15;
+
+// There's no sign-in, so these two caps are what stand between this public
+// endpoint and someone running up the hosting bill (or crashing the
+// container) by firing off unlimited headless-Chromium capture jobs.
+const MAX_CONCURRENT_JOBS = 1;
+const MAX_JOBS_PER_IP_PER_HOUR = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const jobTimestampsByIp = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (jobTimestampsByIp.get(ip) || []).filter(
+    (t) => now - t < RATE_LIMIT_WINDOW_MS
+  );
+  if (recent.length >= MAX_JOBS_PER_IP_PER_HOUR) {
+    jobTimestampsByIp.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  jobTimestampsByIp.set(ip, recent);
+  return false;
+}
 
 app.use(express.json());
 
@@ -30,6 +56,14 @@ const jobs = new Map<string, {
   device: "desktop" | "mobile";
   extractedText?: string;
 }>();
+
+function countActiveJobs(): number {
+  let count = 0;
+  for (const job of jobs.values()) {
+    if (job.status !== "completed" && job.status !== "failed") count++;
+  }
+  return count;
+}
 
 // Helper to crawl internal links
 async function crawlLinks(baseUrl: string, limit: number = 10): Promise<string[]> {
@@ -240,6 +274,17 @@ async function startServer() {
     console.log("POST /api/jobs", req.body);
     const { url, device = "desktop" } = req.body;
     if (!url) return res.status(400).json({ error: "URL is required" });
+
+    if (isRateLimited(req.ip || "unknown")) {
+      return res.status(429).json({
+        error: `Rate limit exceeded. Max ${MAX_JOBS_PER_IP_PER_HOUR} captures per hour.`,
+      });
+    }
+    if (countActiveJobs() >= MAX_CONCURRENT_JOBS) {
+      return res.status(429).json({
+        error: "Server is busy processing another capture. Please try again shortly.",
+      });
+    }
 
     try {
       const jobId = uuidv4();
