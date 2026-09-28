@@ -189,7 +189,21 @@ async function captureScreenshots(jobId: string, urls: string[]) {
 
         // Wait a bit after scrolling back up
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
+        // Hide fixed/sticky-positioned overlays (cookie banners, promo
+        // popups, chat widgets). They stay pinned to the viewport as the
+        // page scrolls, so without this a naive scroll-and-clip screenshot
+        // would capture the same overlay again in every single "part".
+        await page.evaluate(() => {
+          document.querySelectorAll("*").forEach((el) => {
+            if (!(el instanceof HTMLElement)) return;
+            const position = window.getComputedStyle(el).position;
+            if (position === "fixed" || position === "sticky") {
+              el.style.setProperty("display", "none", "important");
+            }
+          });
+        });
+
         // Extract text from the first page for AI summary
         if (i === 0) {
           firstPageText = await page.evaluate(() => {
