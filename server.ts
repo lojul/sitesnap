@@ -11,6 +11,11 @@ import fs from "fs";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Hard cap on screenshot "parts" per page, so a page whose scroll height
+// keeps growing (infinite carousels, ever-expanding "load more" sections)
+// can't balloon into dozens of near-duplicate screenshots.
+const MAX_SCREENSHOT_PARTS = 15;
+
 app.use(express.json());
 
 // Job store (in-memory for simplicity, but could use SQLite)
@@ -102,23 +107,29 @@ async function captureScreenshots(jobId: string, urls: string[]) {
     await page.setViewport({ width: viewportWidth, height: viewportHeight });
 
     let firstPageText = "";
+    const maxCaptureHeight = viewportHeight * MAX_SCREENSHOT_PARTS;
 
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
       try {
         console.log(`Capturing ${url}...`);
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 45000 });
-        
+        // domcontentloaded (not networkidle2) so pages with video embeds/live
+        // chat/analytics that keep the network busy don't time out here.
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+
         // Wait extra time for animations/dynamic content
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Trigger lazy loading by scrolling to the bottom and back up
-        await page.evaluate(async () => {
+        // Trigger lazy loading by scrolling to the bottom and back up.
+        // Capped at maxCaptureHeight so a page whose content keeps growing
+        // as it's scrolled (infinite carousels, "load more" sections) can't
+        // make this loop run forever.
+        await page.evaluate(async (cap) => {
           await new Promise((resolve) => {
             let totalHeight = 0;
             const distance = 100;
             const timer = setInterval(() => {
-              const scrollHeight = document.body.scrollHeight;
+              const scrollHeight = Math.min(document.body.scrollHeight, cap);
               window.scrollBy(0, distance);
               totalHeight += distance;
 
@@ -129,7 +140,7 @@ async function captureScreenshots(jobId: string, urls: string[]) {
               }
             }, 100);
           });
-        });
+        }, maxCaptureHeight);
 
         // Wait a bit after scrolling back up
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -144,8 +155,10 @@ async function captureScreenshots(jobId: string, urls: string[]) {
           });
         }
 
-        // Get total height of the page
-        const totalHeight = await page.evaluate(() => {
+        // Get total height of the page, capped so a page whose height keeps
+        // growing (infinite carousels, ever-expanding "load more" sections)
+        // can't blow up into dozens of near-duplicate screenshots.
+        const rawHeight = await page.evaluate(() => {
           return Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight,
@@ -154,6 +167,7 @@ async function captureScreenshots(jobId: string, urls: string[]) {
             document.documentElement.clientHeight
           );
         });
+        const totalHeight = Math.min(rawHeight, maxCaptureHeight);
 
         const numParts = Math.ceil(totalHeight / viewportHeight);
         const urlSlug = url.replace(/^https?:\/\//, "").replace(/[^a-z0-9]/gi, "_").toLowerCase().substring(0, 30);
