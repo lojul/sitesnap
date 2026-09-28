@@ -46,7 +46,7 @@ app.use(express.json());
 
 // Job store (in-memory for simplicity, but could use SQLite)
 const jobs = new Map<string, {
-  status: "pending" | "crawling" | "capturing" | "zipping" | "completed" | "failed";
+  status: "pending" | "crawling" | "capturing" | "zipping" | "completed" | "failed" | "cancelled";
   progress: number;
   total: number;
   zipData?: Buffer;
@@ -55,12 +55,18 @@ const jobs = new Map<string, {
   url: string;
   device: "desktop" | "mobile";
   extractedText?: string;
+  cancelled?: boolean;
 }>();
+
+// Tracks the live Puppeteer browser for each in-progress job, so a cancel
+// request can force-close it immediately instead of waiting for whatever
+// page.goto/screenshot call is currently in flight to time out on its own.
+const activeBrowsers = new Map<string, Awaited<ReturnType<typeof puppeteer.launch>>>();
 
 function countActiveJobs(): number {
   let count = 0;
   for (const job of jobs.values()) {
-    if (job.status !== "completed" && job.status !== "failed") count++;
+    if (job.status !== "completed" && job.status !== "failed" && job.status !== "cancelled") count++;
   }
   return count;
 }
@@ -106,6 +112,9 @@ async function crawlLinks(baseUrl: string, limit: number = 10): Promise<string[]
 async function captureScreenshots(jobId: string, urls: string[]) {
   const job = jobs.get(jobId);
   if (!job) return;
+  // A cancel request may have landed while this job was still crawling
+  // (before any browser existed to force-close), so check here too.
+  if (job.cancelled) return;
 
   job.status = "capturing";
   job.total = urls.length;
@@ -125,6 +134,7 @@ async function captureScreenshots(jobId: string, urls: string[]) {
       ],
       headless: true
     });
+    activeBrowsers.set(jobId, browser);
 
     const zip = new JSZip();
     const page = await browser.newPage();
@@ -144,6 +154,7 @@ async function captureScreenshots(jobId: string, urls: string[]) {
     const maxCaptureHeight = viewportHeight * MAX_SCREENSHOT_PARTS;
 
     for (let i = 0; i < urls.length; i++) {
+      if (job.cancelled) break;
       const url = urls[i];
       try {
         console.log(`Capturing ${url}...`);
@@ -207,8 +218,9 @@ async function captureScreenshots(jobId: string, urls: string[]) {
         const urlSlug = url.replace(/^https?:\/\//, "").replace(/[^a-z0-9]/gi, "_").toLowerCase().substring(0, 30);
 
         for (let part = 0; part < numParts; part++) {
+          if (job.cancelled) break;
           const yPos = part * viewportHeight;
-          
+
           // Scroll to position
           await page.evaluate((y) => window.scrollTo(0, y), yPos);
           // Wait for any lazy-loaded content or scroll animations
@@ -234,6 +246,10 @@ async function captureScreenshots(jobId: string, urls: string[]) {
       }
     }
 
+    // Cancelled mid-capture: the cancel endpoint already set status/error,
+    // so skip zipping and leave the job as-is.
+    if (job.cancelled) return;
+
     if (firstPageText) {
       job.extractedText = firstPageText;
     }
@@ -247,10 +263,13 @@ async function captureScreenshots(jobId: string, urls: string[]) {
     console.log(`Job ${jobId} completed. ZIP size: ${zipBuffer.length} bytes.`);
   } catch (error: any) {
     console.error("Capture error:", error);
-    job.status = "failed";
-    job.error = error.message;
+    if (!job.cancelled) {
+      job.status = "failed";
+      job.error = error.message;
+    }
   } finally {
     if (browser) await browser.close();
+    activeBrowsers.delete(jobId);
   }
 }
 
@@ -307,7 +326,7 @@ async function startServer() {
         } catch (err) {
           console.error(`Background job ${jobId} failed:`, err);
           const job = jobs.get(jobId);
-          if (job) {
+          if (job && !job.cancelled) {
             job.status = "failed";
             job.error = String(err);
           }
@@ -319,6 +338,30 @@ async function startServer() {
       console.error("Error creating job:", error);
       res.status(500).json({ error: error.message });
     }
+  });
+
+  app.post("/api/jobs/:id/cancel", (req, res) => {
+    const jobId = req.params.id;
+    const job = jobs.get(jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") {
+      return res.status(400).json({ error: "Job has already finished" });
+    }
+
+    job.cancelled = true;
+    job.status = "cancelled";
+    job.error = "Cancelled by user";
+
+    // Force-close the in-flight browser (if any) so whatever page.goto or
+    // screenshot call is currently running aborts immediately instead of
+    // running to its own timeout.
+    const browser = activeBrowsers.get(jobId);
+    if (browser) {
+      browser.close().catch((e) => console.error(`Error closing browser for cancelled job ${jobId}:`, e));
+    }
+
+    res.json({ status: "cancelled" });
   });
 
   app.get("/api/jobs/:id", (req, res) => {

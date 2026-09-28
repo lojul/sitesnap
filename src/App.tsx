@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Aperture, Camera, Download, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, Monitor, Smartphone, Sparkles } from "lucide-react";
+import { Aperture, Camera, Download, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, Monitor, Smartphone, Sparkles, Square } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Markdown from "react-markdown";
 
-type JobStatus = "pending" | "crawling" | "capturing" | "zipping" | "completed" | "failed";
+type JobStatus = "pending" | "crawling" | "capturing" | "zipping" | "completed" | "failed" | "cancelled";
 
 interface Job {
   jobId: string;
@@ -27,6 +27,22 @@ export default function App() {
   const [selectedScreenshots, setSelectedScreenshots] = useState<Set<string>>(new Set());
   const [isDownloadingSelected, setIsDownloadingSelected] = useState(false);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const cancelJob = async () => {
+    if (!job) return;
+    setIsCancelling(true);
+    try {
+      const response = await fetch(`/api/jobs/${job.jobId}/cancel`, { method: "POST" });
+      if (response.ok) {
+        setJob((prev) => prev ? { ...prev, status: "cancelled", error: "Cancelled by user" } : null);
+      }
+    } catch (error) {
+      console.error("Error cancelling job:", error);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const toggleScreenshotSelection = (name: string) => {
     const newSelection = new Set(selectedScreenshots);
@@ -117,7 +133,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!job || job.status === "completed" || job.status === "failed") return;
+    if (!job || job.status === "completed" || job.status === "failed" || job.status === "cancelled") return;
 
     const interval = setInterval(async () => {
       try {
@@ -144,6 +160,7 @@ export default function App() {
       case "zipping": return "Creating ZIP archive...";
       case "completed": return "Screenshots ready!";
       case "failed": return "Failed to process website";
+      case "cancelled": return "Capture cancelled";
       default: return "Processing...";
     }
   };
@@ -197,7 +214,7 @@ export default function App() {
                     placeholder="https://example.com"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
+                    disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed" && job.status !== "cancelled")}
                     className="w-full bg-[#FAF7F2] border-none rounded-2xl py-5 pl-12 pr-4 text-lg focus:ring-2 focus:ring-[#9A3412] transition-all disabled:opacity-50"
                   />
                 </div>
@@ -211,7 +228,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setDevice("desktop")}
-                    disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
+                    disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed" && job.status !== "cancelled")}
                     className={`flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-lg border transition-all ${
                       device === "desktop"
                         ? "bg-[#9A3412] text-[#FAF7F2] border-[#9A3412]"
@@ -224,7 +241,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setDevice("mobile")}
-                    disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
+                    disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed" && job.status !== "cancelled")}
                     className={`flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-lg border transition-all ${
                       device === "mobile"
                         ? "bg-[#9A3412] text-[#FAF7F2] border-[#9A3412]"
@@ -239,7 +256,7 @@ export default function App() {
 
               <button
                 type="submit"
-                disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
+                disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed" && job.status !== "cancelled")}
                 className="w-full bg-[#9A3412] text-[#FAF7F2] rounded-xl py-2.5 font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
               >
                 {isSubmitting ? (
@@ -277,6 +294,7 @@ export default function App() {
                   <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                     job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
                     job.status === "failed" ? "bg-red-100 text-red-700" :
+                    job.status === "cancelled" ? "bg-gray-200 text-gray-600" :
                     "bg-blue-100 text-blue-700"
                   }`}>
                     {job.status}
@@ -293,7 +311,9 @@ export default function App() {
                                  job.total > 0 ? `${(job.progress / job.total) * 100}%` : "10%" 
                         }}
                         className={`h-full transition-all duration-500 ${
-                          job.status === "failed" ? "bg-red-500" : "bg-[#9A3412]"
+                          job.status === "failed" ? "bg-red-500" :
+                          job.status === "cancelled" ? "bg-gray-400" :
+                          "bg-[#9A3412]"
                         }`}
                       />
                     </div>
@@ -309,6 +329,8 @@ export default function App() {
                         <CheckCircle2 className="text-emerald-500" size={20} />
                       ) : job.status === "failed" ? (
                         <AlertCircle className="text-red-500" size={20} />
+                      ) : job.status === "cancelled" ? (
+                        <Square className="text-gray-400" size={18} />
                       ) : (
                         <Loader2 className="animate-spin text-[#211D18]/40" size={20} />
                       )}
@@ -325,7 +347,18 @@ export default function App() {
                       </a>
                     )}
 
-                    {(job.status === "completed" || job.status === "failed") && (
+                    {(job.status === "pending" || job.status === "crawling" || job.status === "capturing" || job.status === "zipping") && (
+                      <button
+                        onClick={cancelJob}
+                        disabled={isCancelling}
+                        className="bg-red-50 text-red-600 px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-red-100 transition-colors disabled:opacity-50"
+                      >
+                        {isCancelling ? <Loader2 className="animate-spin" size={16} /> : <Square size={16} />}
+                        Stop
+                      </button>
+                    )}
+
+                    {(job.status === "completed" || job.status === "failed" || job.status === "cancelled") && (
                       <button
                         onClick={() => { setJob(null); setUrl(""); setSelectedScreenshots(new Set()); }}
                         className="p-3 rounded-xl border border-black/5 hover:bg-black/5 transition-colors"
@@ -337,8 +370,14 @@ export default function App() {
                   </div>
 
                   {job.error && (
-                    <div className="mt-4 p-4 bg-red-50 rounded-xl text-red-700 text-sm flex items-start gap-3">
-                      <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                    <div className={`mt-4 p-4 rounded-xl text-sm flex items-start gap-3 ${
+                      job.status === "cancelled" ? "bg-gray-100 text-gray-600" : "bg-red-50 text-red-700"
+                    }`}>
+                      {job.status === "cancelled" ? (
+                        <Square size={18} className="shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                      )}
                       <p>{job.error}</p>
                     </div>
                   )}
