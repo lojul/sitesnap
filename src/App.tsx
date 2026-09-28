@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Camera, Download, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, Monitor, Smartphone, Sparkles } from "lucide-react";
+import { Aperture, Camera, Download, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, Monitor, Smartphone, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Markdown from "react-markdown";
 
@@ -149,12 +149,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] text-[#141414] font-sans selection:bg-[#141414] selection:text-[#F5F5F0]">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#211D18] font-sans selection:bg-[#C2410C] selection:text-[#FAF7F2]">
       {/* Header */}
-      <header className="border-b border-[#141414]/10 p-6 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-[#211D18]/10 p-6 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#141414] rounded-xl flex items-center justify-center text-[#F5F5F0]">
-            <Camera size={24} />
+          <div className="relative w-10 h-10 rounded-full bg-[#C2410C] ring-2 ring-[#C2410C]/25 ring-offset-2 ring-offset-[#FAF7F2] flex items-center justify-center text-[#FAF7F2]">
+            <Aperture size={20} strokeWidth={2} />
           </div>
           <h1 className="text-xl font-bold tracking-tight uppercase italic font-serif">SiteSnap</h1>
         </div>
@@ -187,7 +187,7 @@ export default function App() {
                   Target Website URL
                 </label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#141414]/30 group-focus-within:text-[#141414] transition-colors">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#211D18]/30 group-focus-within:text-[#211D18] transition-colors">
                     <Globe size={20} />
                   </div>
                   <input
@@ -198,7 +198,7 @@ export default function App() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
-                    className="w-full bg-[#F5F5F0] border-none rounded-2xl py-5 pl-12 pr-4 text-lg focus:ring-2 focus:ring-[#141414] transition-all disabled:opacity-50"
+                    className="w-full bg-[#FAF7F2] border-none rounded-2xl py-5 pl-12 pr-4 text-lg focus:ring-2 focus:ring-[#C2410C] transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -214,8 +214,8 @@ export default function App() {
                     disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
                     className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${
                       device === "desktop" 
-                        ? "bg-[#141414] text-[#F5F5F0] border-[#141414]" 
-                        : "bg-transparent text-[#141414] border-black/10 hover:border-black/30"
+                        ? "bg-[#C2410C] text-[#FAF7F2] border-[#C2410C]" 
+                        : "bg-transparent text-[#211D18] border-black/10 hover:border-black/30"
                     }`}
                   >
                     <Monitor size={18} />
@@ -227,8 +227,8 @@ export default function App() {
                     disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
                     className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${
                       device === "mobile" 
-                        ? "bg-[#141414] text-[#F5F5F0] border-[#141414]" 
-                        : "bg-transparent text-[#141414] border-black/10 hover:border-black/30"
+                        ? "bg-[#C2410C] text-[#FAF7F2] border-[#C2410C]" 
+                        : "bg-transparent text-[#211D18] border-black/10 hover:border-black/30"
                     }`}
                   >
                     <Smartphone size={18} />
@@ -240,7 +240,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={isSubmitting || (job !== null && job.status !== "completed" && job.status !== "failed")}
-                className="w-full bg-[#141414] text-[#F5F5F0] rounded-2xl py-5 font-bold text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                className="w-full bg-[#C2410C] text-[#FAF7F2] rounded-2xl py-5 font-bold text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
               >
                 {isSubmitting ? (
                   <Loader2 className="animate-spin" size={24} />
@@ -285,7 +285,7 @@ export default function App() {
 
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="flex-1 h-3 bg-[#F5F5F0] rounded-full overflow-hidden">
+                    <div className="flex-1 h-3 bg-[#FAF7F2] rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ 
@@ -293,7 +293,7 @@ export default function App() {
                                  job.total > 0 ? `${(job.progress / job.total) * 100}%` : "10%" 
                         }}
                         className={`h-full transition-all duration-500 ${
-                          job.status === "failed" ? "bg-red-500" : "bg-[#141414]"
+                          job.status === "failed" ? "bg-red-500" : "bg-[#C2410C]"
                         }`}
                       />
                     </div>
@@ -310,7 +310,7 @@ export default function App() {
                       ) : job.status === "failed" ? (
                         <AlertCircle className="text-red-500" size={20} />
                       ) : (
-                        <Loader2 className="animate-spin text-[#141414]/40" size={20} />
+                        <Loader2 className="animate-spin text-[#211D18]/40" size={20} />
                       )}
                       <span>{getStatusText(job.status)}</span>
                     </div>
@@ -355,7 +355,7 @@ export default function App() {
                           <button
                             onClick={downloadSelected}
                             disabled={isDownloadingSelected}
-                            className="bg-[#141414] text-[#F5F5F0] px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-black/80 transition-all disabled:opacity-50"
+                            className="bg-[#C2410C] text-[#FAF7F2] px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#9A3412] transition-all disabled:opacity-50"
                           >
                             {isDownloadingSelected ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                             Download Selected ({selectedScreenshots.size})
@@ -375,7 +375,7 @@ export default function App() {
                             onClick={() => toggleScreenshotSelection(name)}
                             className={`relative group aspect-[4/3] rounded-2xl overflow-hidden border-2 cursor-pointer transition-all duration-300 ${
                               selectedScreenshots.has(name) 
-                                ? "border-[#141414] ring-4 ring-[#141414]/10" 
+                                ? "border-[#C2410C] ring-4 ring-[#C2410C]/10" 
                                 : "border-transparent shadow-sm hover:shadow-xl hover:shadow-black/10"
                             }`}
                           >
